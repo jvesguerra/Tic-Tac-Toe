@@ -1,9 +1,18 @@
+'''
+Joshua V. Esguerra
+170 - WX3L
+MinMax Algorithm
+
+
+Reference:
+https://github.com/AlejoG10/python-tictactoe-ai-yt
+'''
+
 import copy
 import random
 import pygame
 import sys
 import numpy as np
-
 from constants import *
 
 # initial pygame window
@@ -43,43 +52,43 @@ class Board:
     # return 0 if no one won yet
     # return 1 if p1 wins
     # return 2 if p2 wins
-    def final_state(self):
+    def final_state(self, show=False):
         # vertical wins
         for col in range(COLS):
             if self.squares[0][col] == self.squares[1][col] == self.squares[2][col] != 0:   # not equal to 0 means it is not empty   
-                # if show:
-                #     color = CIRC_COLOR if self.squares[0][col] == 2 else CROSS_COLOR
-                #     iPos = (col * SQSIZE + SQSIZE // 2, 20)
-                #     fPos = (col * SQSIZE + SQSIZE // 2, HEIGHT - 20)
-                #     pygame.draw.line(screen, color, iPos, fPos, LINE_WIDTH)
+                if show:
+                    color = CIRC_COLOR if self.squares[0][col] == 2 else CROSS_COLOR
+                    iPos = (col * SQSIZE + SQSIZE // 2, 20)
+                    fPos = (col * SQSIZE + SQSIZE // 2, HEIGHT - 20)
+                    pygame.draw.line(screen, color, iPos, fPos, LINE_WIDTH)
                 return self.squares[0][col] # player number
         
         # horizonal wins
         for row in range(ROWS):
             if self.squares[row][0] == self.squares[row][1] == self.squares[row][2] != 0:   # not equal to 0 means it is not empty   
-                # if show:
-                #     color = CIRC_COLOR if self.squares[row][0] == 2 else CROSS_COLOR
-                #     iPos = (20, row * SQSIZE + SQSIZE // 2)
-                #     fPos = (WIDTH - 20, row * SQSIZE + SQSIZE // 2)
-                #     pygame.draw.line(screen, color, iPos, fPos, LINE_WIDTH)
+                if show:
+                    color = CIRC_COLOR if self.squares[row][0] == 2 else CROSS_COLOR
+                    iPos = (20, row * SQSIZE + SQSIZE // 2)
+                    fPos = (WIDTH - 20, row * SQSIZE + SQSIZE // 2)
+                    pygame.draw.line(screen, color, iPos, fPos, LINE_WIDTH)
                 return self.squares[row][0]
 
         # \ diagonal win
         if self.squares[0][0] == self.squares[1][1] == self.squares[2][2] != 0:   # not equal to 0 means it is not empty 
-            # if show:
-            #     color = CIRC_COLOR if self.squares[1][1] == 2 else CROSS_COLOR
-            #     iPos = (20, 20)
-            #     fPos = (WIDTH - 20, HEIGHT - 20)
-            #     pygame.draw.line(screen, color, iPos, fPos, CROSS_WIDTH)
+            if show:
+                color = CIRC_COLOR if self.squares[1][1] == 2 else CROSS_COLOR
+                iPos = (20, 20)
+                fPos = (WIDTH - 20, HEIGHT - 20)
+                pygame.draw.line(screen, color, iPos, fPos, CROSS_WIDTH)
             return self.squares[1][1]
 
         # / diagonal win
         if self.squares[2][0] == self.squares[1][1] == self.squares[0][2] != 0:
-            # if show:
-            #     color = CIRC_COLOR if self.squares[1][1] == 2 else CROSS_COLOR
-            #     iPos = (20, HEIGHT - 20)
-            #     fPos = (WIDTH - 20, 20)
-            #     pygame.draw.line(screen, color, iPos, fPos, CROSS_WIDTH)
+            if show:
+                color = CIRC_COLOR if self.squares[1][1] == 2 else CROSS_COLOR
+                iPos = (20, HEIGHT - 20)
+                fPos = (WIDTH - 20, 20)
+                pygame.draw.line(screen, color, iPos, fPos, CROSS_WIDTH)
             return self.squares[1][1]
         
         # no win
@@ -132,7 +141,6 @@ class AI:
 
             return max_eval, best_move
 
-        #
         elif not maximize:
             min_eval = 1000
             best_move = None
@@ -172,6 +180,8 @@ class Game:
 
     # create the lines of tic tac toe
     def show_lines(self):
+        # to clear initial screen
+        screen.fill(BG_COLOR)
         # vertical
         pygame.draw.line(screen,LINE_COLOR,(SQSIZE,0),(SQSIZE, HEIGHT), LINE_WIDTH)
         pygame.draw.line(screen,LINE_COLOR,(WIDTH - SQSIZE,0),(WIDTH -SQSIZE, HEIGHT), LINE_WIDTH)
@@ -201,6 +211,19 @@ class Game:
     def next_turn(self):
         self.player = self.player % 2 + 1
 
+    # change game mode
+    def change_gamemode(self):
+        if self.gamemode == 'pvp':
+            self.gamemode = 'ai'
+        else:
+            self.gamemode = 'pvp'
+
+    def reset(self):
+        self.__init__()
+
+    def isdone(self):
+        return self.board.final_state(show=True) != 0 or self.board.isfull()
+
 
 
 def main():
@@ -215,6 +238,24 @@ def main():
                 pygame.quit()
                 sys.exit()
 
+            if event.type == pygame.KEYDOWN:
+                # G - gamemode
+                if event.key == pygame.K_g:
+                    game.change_gamemode()
+                
+                # choose ai level
+                # Press - 0
+                if event.key == pygame.K_0:
+                    ai.level = 0
+                # Press - 1
+                if event.key == pygame.K_1:
+                    ai.level = 1
+
+                if event.key == pygame.K_r:
+                    game.reset()
+                    board = game.board
+                    ai = game.ai
+
             # check mouse event
             if event.type == pygame.MOUSEBUTTONDOWN:
 
@@ -223,24 +264,31 @@ def main():
                 row = pos[1]//SQSIZE
                 col = pos[0]//SQSIZE
 
-                if board.empty_sqr(row,col):
+                if board.empty_sqr(row,col) and game.running:
+                    # make move
                     board.mark_sqr(row,col,game.player)
                     game.draw_fig(row,col)
                     game.next_turn()
-                    #print(board.squares)
+                    
+                    # check if game is done to prevent errors
+                    if game.isdone():
+                        game.running = False
 
-        if game.gamemode == 'ai' and game.player == ai.player:
+        if game.gamemode == 'ai' and game.player == ai.player and game.running:
             # update screen
             pygame.display.update()  
 
             # ai functions
             row, col = ai.eval(board)
 
+            # make move
             board.mark_sqr(row,col,game.player)
             game.draw_fig(row,col)
             game.next_turn()
 
-
+            # check if game is done to prevent errors
+            if game.isdone():
+                game.running = False
 
         pygame.display.update()  
 
