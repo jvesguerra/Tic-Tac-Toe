@@ -66,7 +66,10 @@ class Board:
 class Game:
     def __init__(self):
         self.board = Board()
+        # self.ai = AI()
         self.player = 1
+        self.gamemode = 'pvp'   # pvp or ai
+        self.running = True # If game over, set to False
         self.show_lines()
 
     # create the lines of tic tac toe
